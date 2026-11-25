@@ -1,0 +1,7 @@
+{
+  "parent": "stalwartdungeonsbugfix:custom/tungsten_shield_blocking",
+  "textures": {
+    "9": "stalwart_dungeons:block/chorundum_shield",
+    "particle": "stalwart_dungeons:item/chorundum_chestplate"
+  }
+}

@@ -20,6 +20,12 @@ import javax.annotation.Nullable;
 public abstract class SdShieldPrProcedureMixin {
     @Inject(method = "execute(Lnet/minecraftforge/eventbus/api/Event;Lnet/minecraft/world/entity/Entity;D)V", at = @At("HEAD"), cancellable = true)
     private static void sd$safeShieldDurability(@Nullable Event event, Entity entity, double amount, CallbackInfo ci) {
+        // 当启用原生盾牌格挡修复时，原版 Player#hurtCurrentlyUsedShield 已按格挡角度、耐久附魔与 ShieldBlockEvent 精准扣减耐久，
+        // 跳过原模组在 LivingAttackEvent 中重复手写扣耐久的逻辑，防止单次格挡双倍掉耐久。
+        if (SdBugfixConfig.isFixCustomShieldsEnabled()) {
+            ci.cancel();
+            return;
+        }
         if (!SdBugfixConfig.isFixItemProceduresAndMechanicsEnabled()) {
             return;
         }

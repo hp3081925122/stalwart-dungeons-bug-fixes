@@ -1,0 +1,23 @@
+{
+  "parent": "stalwart_dungeons:custom/tungsten_shield",
+  "display": {
+    "thirdperson_righthand": {
+      "rotation": [45, 135, 0],
+      "translation": [3.5, 1.5, 2.5]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [45, 135, 0],
+      "translation": [3.5, 1.5, 2.5]
+    },
+    "firstperson_righthand": {
+      "rotation": [0, 12, -10],
+      "translation": [-4.0, 2.25, -0.5],
+      "scale": [0.95, 0.86, 0.95]
+    },
+    "firstperson_lefthand": {
+      "rotation": [0, -12, 10],
+      "translation": [-4.0, 2.25, -0.5],
+      "scale": [0.95, 0.86, 0.95]
+    }
+  }
+}

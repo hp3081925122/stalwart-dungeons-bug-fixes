@@ -2,6 +2,8 @@ package com.hp.stalwartdungeonsbugfix.mixin.entity;
 
 import com.hp.stalwartdungeonsbugfix.config.SdBugfixConfig;
 import net.mcreator.stalwartdungeons.entity.SheltererWithoutArmorEntity;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
@@ -48,5 +50,16 @@ public abstract class SheltererWithoutArmorEntityMixin extends Monster {
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, false, false));
         ci.cancel();
+    }
+
+    /**
+     * 与一阶段 SheltererEntity 保持一致，免疫摔落伤害，避免末地高台战斗时被击退直接摔死。
+     */
+    @Override
+    public boolean hurt(DamageSource source, float amount) {
+        if (SdBugfixConfig.isFixEntityCrashesAndAiEnabled() && source.is(DamageTypes.FALL)) {
+            return false;
+        }
+        return super.hurt(source, amount);
     }
 }

@@ -1,0 +1,12 @@
+{
+  "type": "stalwartdungeonsbugfix:dungeon",
+  "biomes": "#stalwart_dungeons:has_structure/end_dungeon",
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "none",
+  "template": "stalwart_dungeons:shell_globe",
+  "placement_mode": "end_island",
+  "y_offset": -18,
+  "min_distance_from_origin": 1000,
+  "allow_rotation": true
+}

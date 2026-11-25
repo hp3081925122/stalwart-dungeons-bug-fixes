@@ -3,8 +3,11 @@ package com.hp.stalwartdungeonsbugfix.test;
 import com.hp.stalwartdungeonsbugfix.Stalwartdungeonsbugfix;
 import com.hp.stalwartdungeonsbugfix.ai.SdSafeAwfulGhastChargeGoal;
 import com.hp.stalwartdungeonsbugfix.core.SdWorkQueueManager;
+import com.hp.stalwartdungeonsbugfix.item.SdItemLogicHelper;
 import com.hp.stalwartdungeonsbugfix.world.SdBedrockProtectProcessor;
+import com.hp.stalwartdungeonsbugfix.world.SdDungeonPiece;
 import com.hp.stalwartdungeonsbugfix.world.SdWorldgenHelper;
+import com.mojang.datafixers.util.Pair;
 import io.netty.buffer.Unpooled;
 import net.mcreator.stalwartdungeons.StalwartDungeonsMod;
 import net.mcreator.stalwartdungeons.block.entity.TeleporterBlockBlockEntity;
@@ -39,6 +42,7 @@ import net.mcreator.stalwartdungeons.procedures.KeepingCastleSpawnUpdateTickProc
 import net.mcreator.stalwartdungeons.procedures.NetherHammerBlockDestroyedWithToolProcedure;
 import net.mcreator.stalwartdungeons.procedures.NetherHammerLivingEntityIsHitWithToolProcedure;
 import net.mcreator.stalwartdungeons.procedures.NetherKeeperAltarOnBlockRightClickedProcedure;
+import net.mcreator.stalwartdungeons.procedures.NetherWartCocoonOnEntityTickUpdateProcedure;
 import net.mcreator.stalwartdungeons.procedures.ObsidianStrikerOnBlockRightClickedProcedure;
 import net.mcreator.stalwartdungeons.procedures.PropulkOnEntityTickUpdateProcedure;
 import net.mcreator.stalwartdungeons.procedures.SdShieldPrProcedure;
@@ -62,23 +66,30 @@ import net.mcreator.stalwartdungeons.procedures.TungstenShieldCanUseRangedItemPr
 import net.mcreator.stalwartdungeons.procedures.WartedTungstenBodyTickEventProcedure;
 import net.mcreator.stalwartdungeons.world.inventory.TeleporterGUIMenu;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderSet;
+import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.EntityTypeTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.RandomStrollGoal;
@@ -91,11 +102,21 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.crafting.SmithingRecipe;
 import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.SlabType;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.level.levelgen.structure.Structure;
+import net.minecraft.world.level.levelgen.structure.StructureSet;
+import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.level.material.MapColor;
@@ -106,7 +127,9 @@ import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.ToolActions;
 import net.minecraftforge.event.RegisterGameTestsEvent;
+import net.minecraftforge.event.entity.EntityStruckByLightningEvent;
 import net.minecraftforge.event.entity.living.MobEffectEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -656,6 +679,230 @@ public final class SdBugfixGameTests {
         AwfulDungeonsSpawnBlockAddedProcedure.execute(null, 0, 0, 0);
         KeepingCastleSpawnUpdateTickProcedure.execute(null, 0, 0, 0);
         EnderGlobeSpawnUpdateTickProcedure.execute(null, 0, 0, 0);
+
+        helper.succeed();
+    }
+
+    @GameTest(template = EMPTY_TEMPLATE, templateNamespace = Stalwartdungeonsbugfix.MOD_ID)
+    public static void testNativeStructuresRegisteredAndLocatable(GameTestHelper helper) {
+        ServerLevel overworld = helper.getLevel();
+        Registry<Structure> structureRegistry = overworld.registryAccess().registryOrThrow(Registries.STRUCTURE);
+        Registry<StructureSet> setRegistry = overworld.registryAccess().registryOrThrow(Registries.STRUCTURE_SET);
+
+        ResourceLocation awfulId = ResourceLocation.fromNamespaceAndPath("stalwart_dungeons", "awful_dungeon");
+        ResourceLocation keepingId = ResourceLocation.fromNamespaceAndPath("stalwart_dungeons", "keeping_castle");
+        ResourceLocation endId = ResourceLocation.fromNamespaceAndPath("stalwart_dungeons", "end_dungeon");
+
+        Holder<Structure> awfulHolder = structureRegistry.getHolder(ResourceKey.create(Registries.STRUCTURE, awfulId)).orElse(null);
+        Holder<Structure> keepingHolder = structureRegistry.getHolder(ResourceKey.create(Registries.STRUCTURE, keepingId)).orElse(null);
+        Holder<Structure> endHolder = structureRegistry.getHolder(ResourceKey.create(Registries.STRUCTURE, endId)).orElse(null);
+
+        helper.assertTrue(awfulHolder != null, "Native structure stalwart_dungeons:awful_dungeon must be registered");
+        helper.assertTrue(keepingHolder != null, "Native structure stalwart_dungeons:keeping_castle must be registered");
+        helper.assertTrue(endHolder != null, "Native structure stalwart_dungeons:end_dungeon must be registered");
+        helper.assertTrue(setRegistry.containsKey(ResourceLocation.fromNamespaceAndPath("stalwart_dungeons", "nether_dungeons")),
+                "Structure set stalwart_dungeons:nether_dungeons must be registered");
+        helper.assertTrue(setRegistry.containsKey(endId),
+                "Structure set stalwart_dungeons:end_dungeon must be registered");
+
+        // 验证 SdDungeonPiece 四方向旋转的包围盒与 NBT 序列化反序列化完全一致
+        ResourceLocation[] templates = {
+                awfulId,
+                keepingId,
+                ResourceLocation.fromNamespaceAndPath("stalwart_dungeons", "shell_globe")
+        };
+        StructurePieceSerializationContext serCtx = StructurePieceSerializationContext.fromLevel(overworld);
+        for (ResourceLocation tplId : templates) {
+            for (Rotation rot : Rotation.values()) {
+                SdDungeonPiece piece = new SdDungeonPiece(overworld.getStructureManager(), tplId, new BlockPos(100, 50, 200), rot);
+                CompoundTag saved = piece.createTag(serCtx);
+                SdDungeonPiece loaded = new SdDungeonPiece(overworld.getStructureManager(), saved);
+                BoundingBox origBox = piece.getBoundingBox();
+                BoundingBox loadBox = loaded.getBoundingBox();
+                helper.assertTrue(origBox.equals(loadBox), "SdDungeonPiece NBT roundtrip bounding box mismatch for " + tplId + " rot=" + rot);
+                helper.assertTrue(loaded.getRotation() == rot, "SdDungeonPiece NBT roundtrip rotation mismatch for " + tplId);
+            }
+        }
+
+        // 在真实的下界与末地维度实测原生结构定位（与 /locate structure 走同一底层路径）
+        ServerLevel nether = overworld.getServer().getLevel(Level.NETHER);
+        ServerLevel end = overworld.getServer().getLevel(Level.END);
+        helper.assertTrue(nether != null && end != null, "Nether and End levels must exist for native structure locate test");
+
+        Pair<BlockPos, Holder<Structure>> locatedAwful = nether.getChunkSource().getGenerator()
+                .findNearestMapStructure(nether, HolderSet.direct(awfulHolder), BlockPos.ZERO, 100, false);
+        helper.assertTrue(locatedAwful != null, "Native /locate must find stalwart_dungeons:awful_dungeon in Nether");
+
+        Pair<BlockPos, Holder<Structure>> locatedKeeping = nether.getChunkSource().getGenerator()
+                .findNearestMapStructure(nether, HolderSet.direct(keepingHolder), BlockPos.ZERO, 100, false);
+        helper.assertTrue(locatedKeeping != null, "Native /locate must find stalwart_dungeons:keeping_castle in Nether");
+
+        Pair<BlockPos, Holder<Structure>> locatedEnd = end.getChunkSource().getGenerator()
+                .findNearestMapStructure(end, HolderSet.direct(endHolder), new BlockPos(1500, 64, 0), 100, false);
+        helper.assertTrue(locatedEnd != null, "Native /locate must find stalwart_dungeons:end_dungeon in End");
+        long endDistSq = (long) locatedEnd.getFirst().getX() * locatedEnd.getFirst().getX()
+                + (long) locatedEnd.getFirst().getZ() * locatedEnd.getFirst().getZ();
+        helper.assertTrue(endDistSq >= 1000L * 1000L, "Located End dungeon must stay outside main End island (>= 1000 blocks)");
+
+        helper.succeed();
+    }
+
+    @GameTest(template = EMPTY_TEMPLATE, templateNamespace = Stalwartdungeonsbugfix.MOD_ID)
+    public static void testCustomShieldsBlockingAndRepair(GameTestHelper helper) {
+        ItemStack tungsten = new ItemStack(StalwartDungeonsModItems.TUNGSTEN_SHIELD.get());
+        ItemStack warted = new ItemStack(StalwartDungeonsModItems.WARTED_TUNGSTEN_SHIELD.get());
+        ItemStack chorundum = new ItemStack(StalwartDungeonsModItems.CHORUNDUM_SHIELD.get());
+
+        helper.assertTrue(tungsten.canPerformAction(ToolActions.SHIELD_BLOCK), "Tungsten shield must support ToolActions.SHIELD_BLOCK");
+        helper.assertTrue(warted.canPerformAction(ToolActions.SHIELD_BLOCK), "Warted shield must support ToolActions.SHIELD_BLOCK");
+        helper.assertTrue(chorundum.canPerformAction(ToolActions.SHIELD_BLOCK), "Chorundum shield must support ToolActions.SHIELD_BLOCK");
+
+        helper.assertTrue(tungsten.getItem().isValidRepairItem(tungsten, new ItemStack(StalwartDungeonsModItems.TUNGSTEN_INGOT.get())),
+                "Tungsten shield should repair with tungsten_ingot");
+        helper.assertTrue(warted.getItem().isValidRepairItem(warted, new ItemStack(StalwartDungeonsModItems.TUNGSTEN_INGOT.get())),
+                "Warted shield should repair with tungsten_ingot");
+        helper.assertTrue(chorundum.getItem().isValidRepairItem(chorundum, new ItemStack(StalwartDungeonsModItems.CHORUNDUM.get())),
+                "Chorundum shield should repair with chorundum");
+
+        Player player = helper.makeMockSurvivalPlayer();
+        player.setItemInHand(InteractionHand.OFF_HAND, tungsten);
+        player.startUsingItem(InteractionHand.OFF_HAND);
+        for (int i = 0; i < 6; i++) {
+            player.tick();
+        }
+        helper.assertTrue(player.isBlocking(), "Player raising Tungsten Shield for >5 ticks must have isBlocking() == true");
+
+        // 验证旧的 SdShieldPrProcedure 不再与原版格挡重复扣耐久
+        int dmgBefore = tungsten.getDamageValue();
+        SdShieldPrProcedure.execute(player, 10.0);
+        helper.assertTrue(tungsten.getDamageValue() == dmgBefore, "SdShieldPrProcedure must yield to vanilla shield durability when fixCustomShields is enabled");
+
+        helper.succeed();
+    }
+
+    @GameTest(template = EMPTY_TEMPLATE, templateNamespace = Stalwartdungeonsbugfix.MOD_ID)
+    public static void testSevenMissingBlockLootTablesNowDrop(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos pos = helper.absolutePos(new BlockPos(3, 2, 3));
+        ItemStack pickaxe = new ItemStack(Items.IRON_PICKAXE);
+
+        Block[] slabs = {
+                StalwartDungeonsModBlocks.NETHER_BRICKS_AND_NETHERRACK_SLAB.get(),
+                StalwartDungeonsModBlocks.NETHER_BRICKS_AND_SOUL_SAND_SLAB.get(),
+                StalwartDungeonsModBlocks.PURPUR_BRICKS_AND_ENDSTONE_SLAB.get()
+        };
+        for (Block slab : slabs) {
+            List<ItemStack> singleDrops = Block.getDrops(slab.defaultBlockState(), level, pos, null, null, pickaxe);
+            int singleCnt = singleDrops.stream().filter(s -> s.is(slab.asItem())).mapToInt(ItemStack::getCount).sum();
+            helper.assertTrue(singleCnt == 1, "Single slab must drop 1 item: " + ForgeRegistries.BLOCKS.getKey(slab) + ", got " + singleCnt);
+
+            BlockState doubleState = slab.defaultBlockState().setValue(SlabBlock.TYPE, SlabType.DOUBLE);
+            List<ItemStack> doubleDrops = Block.getDrops(doubleState, level, pos, null, null, pickaxe);
+            int doubleCnt = doubleDrops.stream().filter(s -> s.is(slab.asItem())).mapToInt(ItemStack::getCount).sum();
+            helper.assertTrue(doubleCnt == 2, "Double slab must drop 2 items: " + ForgeRegistries.BLOCKS.getKey(slab) + ", got " + doubleCnt);
+        }
+
+        Block[] solids = {
+                StalwartDungeonsModBlocks.NETHER_BRICKS_AND_NETHERRACK_STAIRS.get(),
+                StalwartDungeonsModBlocks.NETHER_BRICKS_AND_SOUL_SAND_STAIRS.get(),
+                StalwartDungeonsModBlocks.PURPUR_BRICKS_AND_ENDSTONE.get(),
+                StalwartDungeonsModBlocks.PURPUR_BRICKS_AND_ENDSTONE_STAIRS.get()
+        };
+        for (Block block : solids) {
+            List<ItemStack> drops = Block.getDrops(block.defaultBlockState(), level, pos, null, null, pickaxe);
+            int cnt = drops.stream().filter(s -> s.is(block.asItem())).mapToInt(ItemStack::getCount).sum();
+            helper.assertTrue(cnt == 1, "Block must drop itself: " + ForgeRegistries.BLOCKS.getKey(block) + ", got " + cnt);
+        }
+
+        helper.succeed();
+    }
+
+    @GameTest(template = EMPTY_TEMPLATE, templateNamespace = Stalwartdungeonsbugfix.MOD_ID)
+    public static void testSmithingRecipesSheltererFallCocoonCreativeAndThunderGuard(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos pos = helper.absolutePos(new BlockPos(4, 2, 4));
+
+        // 1. 全部 6 个锻造台配方均不再被标记为 isIncomplete，且下界合金锤与疣化钨盾均可正常匹配合成
+        List<SmithingRecipe> sdSmithing = level.getRecipeManager().getAllRecipesFor(RecipeType.SMITHING).stream()
+                .filter(r -> "stalwart_dungeons".equals(r.getId().getNamespace()))
+                .toList();
+        helper.assertTrue(sdSmithing.size() == 6, "Expected 6 Stalwart Dungeons smithing recipes, found " + sdSmithing.size());
+        for (SmithingRecipe recipe : sdSmithing) {
+            helper.assertFalse(recipe.isIncomplete(), "Smithing recipe must not be marked incomplete: " + recipe.getId());
+        }
+
+        SimpleContainer netheriteInv = new SimpleContainer(3);
+        netheriteInv.setItem(0, new ItemStack(Items.NETHERITE_UPGRADE_SMITHING_TEMPLATE));
+        netheriteInv.setItem(1, new ItemStack(StalwartDungeonsModItems.DIAMOND_HAMMER.get()));
+        netheriteInv.setItem(2, new ItemStack(Items.NETHERITE_INGOT));
+        SmithingRecipe netheriteMatch = level.getRecipeManager().getRecipeFor(RecipeType.SMITHING, netheriteInv, level).orElse(null);
+        helper.assertTrue(netheriteMatch != null && netheriteMatch.assemble(netheriteInv, level.registryAccess()).is(StalwartDungeonsModItems.NETHERITE_HAMMER.get()),
+                "Netherite Hammer smithing recipe must work with Netherite Upgrade Smithing Template");
+
+        SimpleContainer wartedInv = new SimpleContainer(3);
+        wartedInv.setItem(0, ItemStack.EMPTY);
+        wartedInv.setItem(1, new ItemStack(StalwartDungeonsModItems.TUNGSTEN_SHIELD.get()));
+        wartedInv.setItem(2, new ItemStack(StalwartDungeonsModItems.SPORE_BOTTLE.get()));
+        SmithingRecipe wartedMatch = level.getRecipeManager().getRecipeFor(RecipeType.SMITHING, wartedInv, level).orElse(null);
+        helper.assertTrue(wartedMatch != null && wartedMatch.assemble(wartedInv, level.registryAccess()).is(StalwartDungeonsModItems.WARTED_TUNGSTEN_SHIELD.get()),
+                "Warted Tungsten Shield smithing recipe must work without template");
+
+        // 2. 无甲庇护者二阶段 Boss 免疫摔落伤害
+        SheltererWithoutArmorEntity p2 = StalwartDungeonsModEntities.SHELTERER_WITHOUT_ARMOR.get().create(level);
+        helper.assertTrue(p2 != null, "Failed to create SheltererWithoutArmor");
+        p2.moveTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, 0.0F, 0.0F);
+        level.addFreshEntity(p2);
+        float hpBefore = p2.getHealth();
+        boolean hurtResult = p2.hurt(level.damageSources().fall(), 50.0F);
+        helper.assertFalse(hurtResult, "SheltererWithoutArmor must be immune to FALL damage");
+        helper.assertTrue(p2.getHealth() == hpBefore, "SheltererWithoutArmor health must stay unchanged on FALL damage");
+
+        // 3. 下界疣茧自动弹出创造模式玩家，不锁死下车
+        NetherWartCocoonEntity cocoon = StalwartDungeonsModEntities.NETHER_WART_COCOON.get().create(level);
+        helper.assertTrue(cocoon != null, "Failed to create NetherWartCocoon");
+        cocoon.moveTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, 0.0F, 0.0F);
+        level.addFreshEntity(cocoon);
+        Player creativePlayer = helper.makeMockPlayer();
+        creativePlayer.startRiding(cocoon, true);
+        helper.assertTrue(creativePlayer.getVehicle() == cocoon, "Precondition: creative player mounted cocoon");
+        NetherWartCocoonOnEntityTickUpdateProcedure.execute(level, cocoon.getX(), cocoon.getY(), cocoon.getZ(), cocoon);
+        helper.assertTrue(creativePlayer.getVehicle() == null, "NetherWartCocoon must eject Creative/Spectator players");
+
+        // 4. 雷击附魔保护召唤者本人与地面掉落物免受近战落雷误伤，同时正常劈中怪物
+        LightningBolt bolt = EntityType.LIGHTNING_BOLT.create(level);
+        helper.assertTrue(bolt != null, "Failed to create LightningBolt");
+        bolt.getPersistentData().putBoolean(SdItemLogicHelper.TAG_THUNDER_STRIKE_BOLT, true);
+        bolt.getPersistentData().putUUID(SdItemLogicHelper.TAG_THUNDER_STRIKE_OWNER, creativePlayer.getUUID());
+
+        EntityStruckByLightningEvent ownerEvt = new EntityStruckByLightningEvent(creativePlayer, bolt);
+        MinecraftForge.EVENT_BUS.post(ownerEvt);
+        helper.assertTrue(ownerEvt.isCanceled(), "Thunder Strike lightning must not hurt its own attacker");
+
+        ItemEntity drop = new ItemEntity(level, pos.getX(), pos.getY(), pos.getZ(), new ItemStack(Items.DIAMOND));
+        EntityStruckByLightningEvent itemEvt = new EntityStruckByLightningEvent(drop, bolt);
+        MinecraftForge.EVENT_BUS.post(itemEvt);
+        helper.assertTrue(itemEvt.isCanceled(), "Thunder Strike lightning must not destroy ItemEntity drops");
+
+        Pig enemy = EntityType.PIG.create(level);
+        helper.assertTrue(enemy != null, "Failed to create target Pig");
+        EntityStruckByLightningEvent enemyEvt = new EntityStruckByLightningEvent(enemy, bolt);
+        MinecraftForge.EVENT_BUS.post(enemyEvt);
+        helper.assertFalse(enemyEvt.isCanceled(), "Thunder Strike lightning must still strike enemy targets");
+
+        // 5. 验证 7 张带抢夺加成的实体战利品表全部加载正常
+        String[] entityTables = {
+                "entities/awful_ghast",
+                "entities/shelterer_without_armor",
+                "entities/shelterer",
+                "entities/nether_keeper",
+                "entities/giddy_blaze",
+                "entities/reinforced_blaze",
+                "entities/incomplete_wither"
+        };
+        for (String path : entityTables) {
+            LootTable table = level.getServer().getLootData().getLootTable(ResourceLocation.fromNamespaceAndPath("stalwart_dungeons", path));
+            helper.assertTrue(table != LootTable.EMPTY, "Entity loot table must load cleanly: " + path);
+        }
 
         helper.succeed();
     }

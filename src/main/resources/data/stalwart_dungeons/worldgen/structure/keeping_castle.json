@@ -1,0 +1,12 @@
+{
+  "type": "stalwartdungeonsbugfix:dungeon",
+  "biomes": "#stalwart_dungeons:has_structure/keeping_castle",
+  "step": "underground_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "none",
+  "template": "stalwart_dungeons:keeping_castle",
+  "placement_mode": "nether_cavern",
+  "y_offset": -6,
+  "min_distance_from_origin": 0,
+  "allow_rotation": true
+}

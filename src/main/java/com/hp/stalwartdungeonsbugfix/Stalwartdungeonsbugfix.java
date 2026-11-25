@@ -2,6 +2,7 @@ package com.hp.stalwartdungeonsbugfix;
 
 import com.hp.stalwartdungeonsbugfix.config.SdBugfixConfig;
 import com.hp.stalwartdungeonsbugfix.core.SdServerLifecycleHandler;
+import com.hp.stalwartdungeonsbugfix.world.SdWorldgenRegistry;
 import com.mojang.logging.LogUtils;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
@@ -18,6 +19,7 @@ public final class Stalwartdungeonsbugfix {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public Stalwartdungeonsbugfix(FMLJavaModLoadingContext context) {
+        SdWorldgenRegistry.register(context.getModEventBus());
         context.registerConfig(ModConfig.Type.COMMON, SdBugfixConfig.COMMON_SPEC, "stalwartdungeonsbugfix-common.toml");
         context.registerConfig(ModConfig.Type.CLIENT, SdBugfixConfig.CLIENT_SPEC, "stalwartdungeonsbugfix-client.toml");
         MinecraftForge.EVENT_BUS.register(new SdServerLifecycleHandler());

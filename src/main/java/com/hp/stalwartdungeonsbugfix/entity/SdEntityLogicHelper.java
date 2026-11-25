@@ -133,7 +133,7 @@ public final class SdEntityLogicHelper {
                 if (tamable != null && tamable.isTame() && tamable.isOwnedBy(candidate)) {
                     continue;
                 }
-                if (candidate instanceof Player player && player.isSpectator()) {
+                if (candidate instanceof Player player && (player.isSpectator() || player.isCreative())) {
                     continue;
                 }
                 candidate.addEffect(new MobEffectInstance(spore, 600, 0));
@@ -253,6 +253,15 @@ public final class SdEntityLogicHelper {
             return;
         }
 
+        // 若已被包裹的玩家切换为创造或旁观模式，立即解除骑乘，避免被茧锁死无法下车
+        if (cocoon.isVehicle()) {
+            for (Entity passenger : List.copyOf(cocoon.getPassengers())) {
+                if (passenger instanceof Player player && (player.isSpectator() || player.isCreative())) {
+                    player.stopRiding();
+                }
+            }
+        }
+
         cocoon.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 5, 244, false, false));
 
         AABB box = new AABB(x - 0.5, y - 0.5, z - 0.5, x + 0.5, y + 0.5, z + 0.5);
@@ -305,7 +314,7 @@ public final class SdEntityLogicHelper {
             if (target instanceof SporeProjectileEntity || target instanceof NetherWartCocoonEntity) {
                 continue;
             }
-            if (target instanceof Player player && player.isSpectator()) {
+            if (target instanceof Player player && (player.isSpectator() || player.isCreative())) {
                 continue;
             }
             if (!target.hasEffect(spore)) {
@@ -346,7 +355,7 @@ public final class SdEntityLogicHelper {
             if (target == self || target instanceof SporeProjectileEntity || target instanceof NetherWartCocoonEntity) {
                 continue;
             }
-            if (target instanceof Player player && player.isSpectator()) {
+            if (target instanceof Player player && (player.isSpectator() || player.isCreative())) {
                 continue;
             }
             if (!target.hasEffect(spore)) {

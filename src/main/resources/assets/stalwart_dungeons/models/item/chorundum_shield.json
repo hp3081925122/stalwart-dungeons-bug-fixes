@@ -1,0 +1,15 @@
+{
+  "parent": "stalwart_dungeons:custom/tungsten_shield",
+  "textures": {
+    "9": "stalwart_dungeons:block/chorundum_shield",
+    "particle": "stalwart_dungeons:item/chorundum_chestplate"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "blocking": 1
+      },
+      "model": "stalwart_dungeons:item/chorundum_shield_blocking"
+    }
+  ]
+}

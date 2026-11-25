@@ -1,3 +1,4 @@
 {
-  "mod.stalwartdungeonsbugfix.name": "Stalwart Dungeons Bug Fixes"
+  "mod.stalwartdungeonsbugfix.name": "Stalwart Dungeons Bug Fixes",
+  "enchantment.stalwart_dungeons.thunder_strike.desc": "When sneaking and striking a target with a hammer, grants a chance to summon a lightning bolt on the target."
 }

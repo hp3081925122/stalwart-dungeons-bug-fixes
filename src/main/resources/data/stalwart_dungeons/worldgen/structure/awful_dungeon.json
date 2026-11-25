@@ -1,0 +1,12 @@
+{
+  "type": "stalwartdungeonsbugfix:dungeon",
+  "biomes": "#stalwart_dungeons:has_structure/awful_dungeon",
+  "step": "underground_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "none",
+  "template": "stalwart_dungeons:awful_dungeon",
+  "placement_mode": "nether_cavern",
+  "y_offset": -7,
+  "min_distance_from_origin": 0,
+  "allow_rotation": true
+}

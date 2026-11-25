@@ -17,6 +17,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class AwfulDungeonsFeatureMixin {
     @Inject(method = "place", at = @At("HEAD"), cancellable = true)
     private void sd$safePlaceAwfulDungeon(FeaturePlaceContext<NoneFeatureConfiguration> context, CallbackInfoReturnable<Boolean> cir) {
+        if (SdBugfixConfig.isUseNativeStructuresEnabled()) {
+            cir.setReturnValue(false);
+            return;
+        }
         if (!SdBugfixConfig.isFixDungeonWorldgenEnabled()) {
             return;
         }

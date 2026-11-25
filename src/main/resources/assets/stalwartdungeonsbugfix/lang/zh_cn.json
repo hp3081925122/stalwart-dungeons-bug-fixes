@@ -1,3 +1,4 @@
 {
-  "mod.stalwartdungeonsbugfix.name": "坚固地牢 Bug 修复与优化"
+  "mod.stalwartdungeonsbugfix.name": "坚固地牢 Bug 修复与优化",
+  "enchantment.stalwart_dungeons.thunder_strike.desc": "潜行状态下使用战锤攻击目标时，有概率在目标位置召唤一道闪电。"
 }

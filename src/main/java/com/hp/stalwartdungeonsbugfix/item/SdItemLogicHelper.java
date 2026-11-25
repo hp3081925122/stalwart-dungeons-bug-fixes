@@ -47,6 +47,8 @@ import java.util.Set;
  * 物品、护甲、附魔、盾牌与下界之锤逻辑修复助手。
  */
 public final class SdItemLogicHelper {
+    public static final String TAG_THUNDER_STRIKE_BOLT = "sd_bugfix_thunder_strike";
+    public static final String TAG_THUNDER_STRIKE_OWNER = "sd_bugfix_thunder_owner";
     private static volatile Set<Item> thunderStrikeHammers;
 
     private SdItemLogicHelper() {
@@ -279,7 +281,7 @@ public final class SdItemLogicHelper {
     }
 
     /**
-     * 修复战锤雷击附魔触发：判空 LightningBolt.create 并设置施法者 ServerPlayer（正确归因击杀与成就）。
+     * 修复战锤雷击附魔触发：判空 LightningBolt.create、设置施法者 ServerPlayer 并标记召唤来源以支持免误伤保护。
      */
     public static void handleHammerThunderStrike(LevelAccessor world, double x, double y, double z, @Nullable Entity target, Entity source, ItemStack stack, boolean igniteTarget) {
         if (source == null || !(world instanceof ServerLevel serverLevel)) {
@@ -288,7 +290,9 @@ public final class SdItemLogicHelper {
         if (igniteTarget && target != null) {
             target.setSecondsOnFire(12);
         }
-        if (!source.isShiftKeyDown() || stack == null || stack.isEmpty()) {
+        if ((com.hp.stalwartdungeonsbugfix.config.SdBugfixConfig.isThunderStrikeRequireSneak() && !source.isShiftKeyDown())
+                || stack == null
+                || stack.isEmpty()) {
             return;
         }
         int level = stack.getEnchantmentLevel(StalwartDungeonsModEnchantments.THUNDER_STRIKE.get());
@@ -300,6 +304,8 @@ public final class SdItemLogicHelper {
             LightningBolt bolt = EntityType.LIGHTNING_BOLT.create(serverLevel);
             if (bolt != null) {
                 bolt.moveTo(Vec3.atBottomCenterOf(BlockPos.containing(x, y, z)));
+                bolt.getPersistentData().putBoolean(TAG_THUNDER_STRIKE_BOLT, true);
+                bolt.getPersistentData().putUUID(TAG_THUNDER_STRIKE_OWNER, source.getUUID());
                 if (source instanceof ServerPlayer serverPlayer) {
                     bolt.setCause(serverPlayer);
                 }

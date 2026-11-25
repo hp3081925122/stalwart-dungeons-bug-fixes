@@ -1,0 +1,18 @@
+{
+  "structures": [
+    {
+      "structure": "stalwart_dungeons:awful_dungeon",
+      "weight": 1
+    },
+    {
+      "structure": "stalwart_dungeons:keeping_castle",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 20,
+    "separation": 8,
+    "salt": 1648293101
+  }
+}

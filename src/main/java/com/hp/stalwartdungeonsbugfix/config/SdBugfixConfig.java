@@ -16,6 +16,7 @@ public final class SdBugfixConfig {
     public static final ForgeConfigSpec.BooleanValue OPTIMIZE_WORK_QUEUE;
 
     // 世界生成与结构放置修复
+    public static final ForgeConfigSpec.BooleanValue USE_NATIVE_STRUCTURES;
     public static final ForgeConfigSpec.BooleanValue FIX_DUNGEON_WORLDGEN;
     public static final ForgeConfigSpec.IntValue AWFUL_DUNGEON_SPACING_CHUNKS;
     public static final ForgeConfigSpec.IntValue KEEPING_CASTLE_SPACING_CHUNKS;
@@ -43,10 +44,15 @@ public final class SdBugfixConfig {
 
     // 物品与工具机制修复
     public static final ForgeConfigSpec.BooleanValue FIX_ITEM_PROCEDURES_AND_MECHANICS;
+    public static final ForgeConfigSpec.BooleanValue FIX_CUSTOM_SHIELDS;
+    public static final ForgeConfigSpec.BooleanValue FIX_SMITHING_RECIPES;
+    public static final ForgeConfigSpec.BooleanValue THUNDER_STRIKE_PROTECT_ATTACKER;
+    public static final ForgeConfigSpec.BooleanValue THUNDER_STRIKE_REQUIRE_SNEAK;
 
-    // 客户端渲染缓存优化
+    // 客户端渲染缓存与界面优化
     public static final ForgeConfigSpec.BooleanValue CACHE_ARMOR_HELMET_MODELS;
     public static final ForgeConfigSpec.BooleanValue CACHE_ENTITY_RENDERER_TEXTURES;
+    public static final ForgeConfigSpec.BooleanValue FIX_ITEM_TOOLTIP_TYPOS;
 
     static {
         ForgeConfigSpec.Builder common = new ForgeConfigSpec.Builder();
@@ -64,6 +70,9 @@ public final class SdBugfixConfig {
         common.pop();
 
         common.comment("世界生成与结构放置 / Worldgen and Structure Placement").push("worldgen");
+        USE_NATIVE_STRUCTURES = common
+                .comment("将三座地牢转为原生 Minecraft Structure（支持 /locate structure、探险家指南针、FTB Quests 与分区块渐进生成并停用旧触发方块 Feature；关闭时回退至修复后的 Feature 生成） / Replace legacy placed_feature trigger-block generation with native Minecraft Structures (supports /locate structure, Explorer's Compass, FTB Quests, and chunk-by-chunk worldgen without pop-in freezes).")
+                .define("useNativeStructures", true);
         FIX_DUNGEON_WORLDGEN = common
                 .comment("修复下界与末地地牢生成：防止重叠互切、防止击穿下界基岩顶/底、减少悬空与岩浆淹没、排除末地虚空群系与虚空坐标并修复四方向旋转 / Fix Nether/End dungeon worldgen: prevent overlaps, protect Nether bedrock roof/floor, avoid midair/lava spawns, exclude the_void and End void coordinates.")
                 .define("fixDungeonWorldgen", true);
@@ -136,18 +145,33 @@ public final class SdBugfixConfig {
         FIX_ITEM_PROCEDURES_AND_MECHANICS = common
                 .comment("修复下界之锤自动熔炼因方块已被破坏为空气而失效、三面盾牌松手扫描全服熔炼配方并可能误射隐形箭、远古之火与盾牌事件客户端错误、雷击附魔每帧分配与铁砧误附魔、锤类闪电未设施法者及可怕火枪幽灵火 / Fix Nether Hammer broken auto-smelt, 3 shields smelting recipe scan hack, Ancient Fire, SdShieldPr, Thunder Strike enchantment, hammer lightning cause, and Awful Gun ghost fire.")
                 .define("fixItemProceduresAndMechanics", true);
+        FIX_CUSTOM_SHIELDS = common
+                .comment("修复钨盾/疣化钨盾/紫颂盾在 1.20.1 缺失 ToolActions.SHIELD_BLOCK 导致完全无法格挡的问题，补齐铁砧修理材料并避免与原版盾牌耐久消耗重复扣血 / Restore real shield blocking (ToolActions.SHIELD_BLOCK), anvil repair ingredients, and vanilla durability/disable behavior on Tungsten, Warted Tungsten, and Chorundum shields.")
+                .define("fixCustomShields", true);
+        FIX_SMITHING_RECIPES = common
+                .comment("修复 1.20.1 锻造台空模板配方被 Forge 误判为不完整（isIncomplete）导致 JEI/配方书异常的问题 / Prevent template-free Stalwart Dungeons smithing recipes (Warted Tungsten upgrades) from being flagged as incomplete in 1.20.1.")
+                .define("fixSmithingRecipes", true);
+        THUNDER_STRIKE_PROTECT_ATTACKER = common
+                .comment("雷击附魔触发近战落雷时保护攻击者本人免受自己召唤的闪电伤害 / Protect the attacker from being hurt by lightning bolts summoned by their own Thunder Strike hammer.")
+                .define("thunderStrikeProtectAttacker", true);
+        THUNDER_STRIKE_REQUIRE_SNEAK = common
+                .comment("雷击附魔是否保持原模组必须潜行攻击才触发落雷的设定（设为 false 时普通攻击即可按概率触发） / Whether Thunder Strike requires sneaking while attacking (original mod behavior). Set false to trigger on normal hammer attacks.")
+                .define("thunderStrikeRequireSneak", true);
         common.pop();
 
         COMMON_SPEC = common.build();
 
         ForgeConfigSpec.Builder client = new ForgeConfigSpec.Builder();
-        client.comment("客户端渲染优化 / Client Rendering Optimizations").push("client");
+        client.comment("客户端渲染与提示优化 / Client Rendering and Tooltip Optimizations").push("client");
         CACHE_ARMOR_HELMET_MODELS = client
                 .comment("缓存钨/疣化钨/紫颂锭头盔模型，消除每帧重复 bakeLayer 与大量对象分配 / Cache custom helmet models for Tungsten, Warted Tungsten, and Chorundum helmets to stop per-frame bakeLayer allocations.")
                 .define("cacheArmorHelmetModels", true);
         CACHE_ENTITY_RENDERER_TEXTURES = client
                 .comment("缓存 11 个实体渲染器的贴图 ResourceLocation 与庇护者发光层 RenderType / Cache ResourceLocation instances in 11 entity renderers and EyesLayer RenderType in SheltererRenderer.")
                 .define("cacheEntityRendererTextures", true);
+        FIX_ITEM_TOOLTIP_TYPOS = client
+                .comment("修正下界之锤、三套护甲与可怕匕首硬编码 Tooltip 中的英文拼写错误（Brun/Imunise/ennemy） / Fix hardcoded English tooltip typos on Nether Hammer, armor sets, and Awful Dagger.")
+                .define("fixItemTooltipTypos", true);
         client.pop();
 
         CLIENT_SPEC = client.build();
@@ -175,6 +199,10 @@ public final class SdBugfixConfig {
 
     public static boolean isOptimizeWorkQueueEnabled() {
         return commonEnabled(OPTIMIZE_WORK_QUEUE);
+    }
+
+    public static boolean isUseNativeStructuresEnabled() {
+        return commonEnabled(USE_NATIVE_STRUCTURES);
     }
 
     public static boolean isFixDungeonWorldgenEnabled() {
@@ -225,12 +253,32 @@ public final class SdBugfixConfig {
         return commonEnabled(FIX_ITEM_PROCEDURES_AND_MECHANICS);
     }
 
+    public static boolean isFixCustomShieldsEnabled() {
+        return commonEnabled(FIX_CUSTOM_SHIELDS);
+    }
+
+    public static boolean isFixSmithingRecipesEnabled() {
+        return commonEnabled(FIX_SMITHING_RECIPES);
+    }
+
+    public static boolean isThunderStrikeProtectAttackerEnabled() {
+        return commonEnabled(THUNDER_STRIKE_PROTECT_ATTACKER);
+    }
+
+    public static boolean isThunderStrikeRequireSneak() {
+        return !COMMON_SPEC.isLoaded() || THUNDER_STRIKE_REQUIRE_SNEAK.get();
+    }
+
     public static boolean isCacheArmorHelmetModelsEnabled() {
         return clientEnabled(CACHE_ARMOR_HELMET_MODELS);
     }
 
     public static boolean isCacheEntityRendererTexturesEnabled() {
         return clientEnabled(CACHE_ENTITY_RENDERER_TEXTURES);
+    }
+
+    public static boolean isFixItemTooltipTyposEnabled() {
+        return clientEnabled(FIX_ITEM_TOOLTIP_TYPOS);
     }
 
     public static int getAwfulDungeonSpacingChunks() {
