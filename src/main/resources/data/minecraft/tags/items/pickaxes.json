@@ -1,0 +1,15 @@
+{
+  "replace": false,
+  "values": [
+    "stalwart_dungeons:tungsten_pickaxe",
+    "stalwart_dungeons:chorundum_pickaxe",
+    "stalwart_dungeons:wooden_hammer",
+    "stalwart_dungeons:stone_hammer",
+    "stalwart_dungeons:iron_hammer",
+    "stalwart_dungeons:golden_hammer",
+    "stalwart_dungeons:diamond_hammer",
+    "stalwart_dungeons:netherite_hammer",
+    "stalwart_dungeons:tungsten_hammer",
+    "stalwart_dungeons:nether_hammer"
+  ]
+}

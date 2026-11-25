@@ -1,0 +1,11 @@
+{
+  "replace": false,
+  "values": [
+    "stalwart_dungeons:soul_bricks_slab",
+    "stalwart_dungeons:soul_tiles_slab",
+    "stalwart_dungeons:nether_bricks_and_netherrack_slab",
+    "stalwart_dungeons:nether_bricks_and_soul_sand_slab",
+    "stalwart_dungeons:purpur_bricks_slab",
+    "stalwart_dungeons:purpur_bricks_and_endstone_slab"
+  ]
+}

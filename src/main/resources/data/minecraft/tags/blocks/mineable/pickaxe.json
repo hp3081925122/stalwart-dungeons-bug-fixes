@@ -1,0 +1,18 @@
+{
+  "replace": false,
+  "values": [
+    "stalwart_dungeons:spore_vaporizer",
+    "stalwart_dungeons:transient_block_close",
+    "stalwart_dungeons:transient_block_open",
+    "stalwart_dungeons:giddy_statue",
+    "stalwart_dungeons:nether_bricks_and_netherrack",
+    "stalwart_dungeons:nether_bricks_and_netherrack_stairs",
+    "stalwart_dungeons:nether_bricks_and_netherrack_slab",
+    "stalwart_dungeons:nether_bricks_and_soul_sand",
+    "stalwart_dungeons:nether_bricks_and_soul_sand_stairs",
+    "stalwart_dungeons:nether_bricks_and_soul_sand_slab",
+    "stalwart_dungeons:purpur_bricks_and_endstone",
+    "stalwart_dungeons:purpur_bricks_and_endstone_stairs",
+    "stalwart_dungeons:purpur_bricks_and_endstone_slab"
+  ]
+}

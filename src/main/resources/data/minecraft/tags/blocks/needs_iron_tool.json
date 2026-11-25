@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "stalwart_dungeons:tungsten_ore",
+    "stalwart_dungeons:awful_ghast_altar",
+    "stalwart_dungeons:nether_keeper_altar",
+    "stalwart_dungeons:shelterer_altar"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "stalwart_dungeons:awful_ghast",
+    "stalwart_dungeons:nether_keeper",
+    "stalwart_dungeons:shelterer",
+    "stalwart_dungeons:shelterer_without_armor"
+  ]
+}
