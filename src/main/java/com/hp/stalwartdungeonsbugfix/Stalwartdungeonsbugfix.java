@@ -1,10 +1,13 @@
 package com.hp.stalwartdungeonsbugfix;
 
+import com.hp.stalwartdungeonsbugfix.client.SdClientPackRegister;
 import com.hp.stalwartdungeonsbugfix.config.SdBugfixConfig;
 import com.hp.stalwartdungeonsbugfix.core.SdServerLifecycleHandler;
 import com.hp.stalwartdungeonsbugfix.world.SdWorldgenRegistry;
 import com.mojang.logging.LogUtils;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -23,6 +26,7 @@ public final class Stalwartdungeonsbugfix {
         context.registerConfig(ModConfig.Type.COMMON, SdBugfixConfig.COMMON_SPEC, "stalwartdungeonsbugfix-common.toml");
         context.registerConfig(ModConfig.Type.CLIENT, SdBugfixConfig.CLIENT_SPEC, "stalwartdungeonsbugfix-client.toml");
         MinecraftForge.EVENT_BUS.register(new SdServerLifecycleHandler());
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> SdClientPackRegister.register(context.getModEventBus()));
         LOGGER.info("Initialized Stalwart Dungeons Bug Fixes ({})", MOD_ID);
     }
 }

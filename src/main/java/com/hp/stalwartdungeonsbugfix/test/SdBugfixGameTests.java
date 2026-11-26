@@ -970,4 +970,54 @@ public final class SdBugfixGameTests {
 
         helper.succeed();
     }
+
+    @GameTest(template = EMPTY_TEMPLATE, templateNamespace = Stalwartdungeonsbugfix.MOD_ID)
+    public static void testMcrCatalogAuditFixesAndTopOverridePack(GameTestHelper helper) {
+        org.spongepowered.asm.mixin.MixinEnvironment.getCurrentEnvironment().audit();
+
+        ServerLevel level = helper.getLevel();
+        BlockPos absPos = helper.absolutePos(new BlockPos(2, 3, 2));
+
+        // 1. 验证全部 21 种实体追踪半径已收敛（弹射物 6、常规实体 8、Boss 10）
+        int checked = 0;
+        for (var entry : StalwartDungeonsModEntities.REGISTRY.getEntries()) {
+            int range = entry.get().clientTrackingRange();
+            helper.assertTrue(range >= 4 && range <= 10,
+                    "Stalwart Dungeons entity tracking range must be 4..10 chunks, got " + range + " for " + entry.getId());
+            checked++;
+        }
+        helper.assertTrue(checked == 21, "Expected 21 Stalwart Dungeons entities, got " + checked);
+        helper.assertTrue(StalwartDungeonsModEntities.AWFUL_GHAST.get().clientTrackingRange() == 10, "Awful Ghast tracking range must be 10");
+        helper.assertTrue(StalwartDungeonsModEntities.AWFUL_GUN.get().clientTrackingRange() == 6, "Awful Gun projectile tracking range must be 6");
+        helper.assertTrue(StalwartDungeonsModEntities.PROPULK.get().clientTrackingRange() == 8, "Propulk tracking range must be 8");
+
+        // 2. 验证原未补齐的 AbstractArrow 实体已统一禁用拾取并具备最大飞行寿命清理
+        net.mcreator.stalwartdungeons.entity.AwfulGunEntity bullet = new net.mcreator.stalwartdungeons.entity.AwfulGunEntity(
+                StalwartDungeonsModEntities.AWFUL_GUN.get(), level);
+        bullet.setPos(absPos.getX() + 0.5, absPos.getY(), absPos.getZ() + 0.5);
+        level.addFreshEntity(bullet);
+        bullet.tick();
+        helper.assertTrue(bullet.pickup == AbstractArrow.Pickup.DISALLOWED, "AwfulGunEntity pickup must be DISALLOWED");
+        bullet.tickCount = 400;
+        bullet.tick();
+        helper.assertTrue(bullet.isRemoved(), "AwfulGunEntity reaching 400 ticks must discard");
+
+        LevitationProjectileEntity lev = new LevitationProjectileEntity(StalwartDungeonsModEntities.LEVITATION_PROJECTILE.get(), level);
+        lev.setPos(absPos.getX() + 0.5, absPos.getY(), absPos.getZ() + 0.5);
+        level.addFreshEntity(lev);
+        lev.tick();
+        helper.assertTrue(lev.pickup == AbstractArrow.Pickup.DISALLOWED, "LevitationProjectileEntity pickup must be DISALLOWED");
+        lev.discard();
+
+        // 3. 验证顶层内置客户端覆盖资源包资产路径完整
+        var modFile = net.minecraftforge.fml.ModList.get().getModFileById(Stalwartdungeonsbugfix.MOD_ID);
+        helper.assertTrue(modFile != null, "ModFile must exist");
+        helper.assertTrue(java.nio.file.Files.exists(modFile.getFile().findResource("resourcepacks/sd_client_overrides/pack.mcmeta")),
+                "TOP override pack pack.mcmeta must exist");
+        helper.assertTrue(java.nio.file.Files.exists(modFile.getFile().findResource(
+                        "resourcepacks/sd_client_overrides/assets/stalwart_dungeons/models/item/tungsten_shield.json")),
+                "TOP override pack tungsten_shield.json must exist");
+
+        helper.succeed();
+    }
 }
