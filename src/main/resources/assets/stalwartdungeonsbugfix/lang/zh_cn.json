@@ -1,4 +1,12 @@
 {
-  "mod.stalwartdungeonsbugfix.name": "坚固地牢 Bug 修复与优化",
-  "enchantment.stalwart_dungeons.thunder_strike.desc": "潜行状态下使用战锤攻击目标时，有概率在目标位置召唤一道闪电。"
+  "tooltip.stalwart_dungeons.when_hit": "命中时：",
+  "tooltip.stalwart_dungeons.when_used": "使用时：",
+  "tooltip.stalwart_dungeons.full_set": "全套效果：",
+  "tooltip.stalwart_dungeons.awful_dagger": "清除目标的全部药水效果",
+  "tooltip.stalwart_dungeons.awful_gun": "发射可怕恶魂火球",
+  "tooltip.stalwart_dungeons.nether_hammer": "灼烧并自动熔炼所挖掘的方块",
+  "tooltip.stalwart_dungeons.shulker_cannon": "需要 TNT 作为弹药",
+  "tooltip.stalwart_dungeons.chorundum_armor": "免疫飘浮效果",
+  "tooltip.stalwart_dungeons.tungsten_armor": "免疫燃烧与凋零效果",
+  "tooltip.stalwart_dungeons.warted_tungsten_armor": "免疫孢子与凋零效果"
 }

@@ -906,4 +906,68 @@ public final class SdBugfixGameTests {
 
         helper.succeed();
     }
+
+    @GameTest(template = EMPTY_TEMPLATE, templateNamespace = Stalwartdungeonsbugfix.MOD_ID)
+    public static void testDataDrivenLootTablesAndLocalizedTexts(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos pos = helper.absolutePos(new BlockPos(2, 2, 2));
+
+        // 1. 验证数据驱动方块战利品表（双层台阶掉 2 个，transient_block_open 掉 transient_block_close）
+        BlockState doubleSlab = StalwartDungeonsModBlocks.PURPUR_BRICKS_SLAB.get().defaultBlockState().setValue(SlabBlock.TYPE, SlabType.DOUBLE);
+        LootParams.Builder pickBuilder = new LootParams.Builder(level)
+                .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(pos))
+                .withParameter(LootContextParams.TOOL, new ItemStack(Items.DIAMOND_PICKAXE));
+        List<ItemStack> slabDrops = doubleSlab.getDrops(pickBuilder);
+        helper.assertTrue(slabDrops.size() == 1 && slabDrops.get(0).getCount() == 2,
+                "Double purpur_bricks_slab must drop 2 slabs via JSON loot table");
+
+        BlockState transientOpen = StalwartDungeonsModBlocks.TRANSIENT_BLOCK_OPEN.get().defaultBlockState();
+        List<ItemStack> transientDrops = transientOpen.getDrops(pickBuilder);
+        helper.assertTrue(transientDrops.stream().anyMatch(s -> s.is(StalwartDungeonsModBlocks.TRANSIENT_BLOCK_CLOSE.get().asItem())),
+                "transient_block_open must drop transient_block_close via JSON loot table");
+
+        // 2. 验证 propulk 与 shulker_cannon 实体 JSON 战利品表已加载且正常掉落
+        LootTable propulkTable = level.getServer().getLootData().getLootTable(ResourceLocation.fromNamespaceAndPath("stalwart_dungeons", "entities/propulk"));
+        helper.assertTrue(propulkTable != LootTable.EMPTY, "entities/propulk loot table must exist");
+        PropulkEntity propulk = StalwartDungeonsModEntities.PROPULK.get().create(level);
+        propulk.setPos(pos.getX(), pos.getY(), pos.getZ());
+        LootParams entParams = new LootParams.Builder(level)
+                .withParameter(LootContextParams.THIS_ENTITY, propulk)
+                .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(pos))
+                .withParameter(LootContextParams.DAMAGE_SOURCE, level.damageSources().generic())
+                .create(LootContextParamSets.ENTITY);
+        helper.assertTrue(propulkTable.getRandomItems(entParams).stream().anyMatch(s -> s.is(Items.SHULKER_SHELL)),
+                "propulk JSON loot table must drop shulker_shell");
+
+        LootTable cannonTable = level.getServer().getLootData().getLootTable(ResourceLocation.fromNamespaceAndPath("stalwart_dungeons", "entities/shulker_cannon"));
+        helper.assertTrue(cannonTable != LootTable.EMPTY, "entities/shulker_cannon loot table must exist");
+        helper.assertTrue(cannonTable.getRandomItems(entParams).stream().anyMatch(s -> s.is(StalwartDungeonsModItems.SHULKER_CANNON_ITEM.get())),
+                "shulker_cannon JSON loot table must drop shulker_cannon_item");
+
+        // 3. 验证原硬编码 Tooltip 与传送器方块实体标题均已改为 TranslatableContents
+        List<Component> hammerTip = new ArrayList<>();
+        StalwartDungeonsModItems.NETHER_HAMMER.get().appendHoverText(
+                new ItemStack(StalwartDungeonsModItems.NETHER_HAMMER.get()), level, hammerTip, TooltipFlag.Default.NORMAL);
+        helper.assertTrue(hammerTip.size() == 2
+                        && hammerTip.get(0).getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents tc0
+                        && "tooltip.stalwart_dungeons.when_used".equals(tc0.getKey()),
+                "NetherHammer tooltip must use translation keys");
+
+        List<Component> daggerTip = new ArrayList<>();
+        StalwartDungeonsModItems.AWFUL_DAGGER.get().appendHoverText(
+                new ItemStack(StalwartDungeonsModItems.AWFUL_DAGGER.get()), level, daggerTip, TooltipFlag.Default.NORMAL);
+        helper.assertTrue(daggerTip.size() == 2
+                        && daggerTip.get(0).getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents tc1
+                        && "tooltip.stalwart_dungeons.when_hit".equals(tc1.getKey()),
+                "AwfulDagger tooltip must use translation keys");
+
+        level.setBlock(pos, StalwartDungeonsModBlocks.TELEPORTER.get().defaultBlockState(), 3);
+        TeleporterBlockBlockEntity tpBe = (TeleporterBlockBlockEntity) level.getBlockEntity(pos);
+        helper.assertTrue(tpBe != null
+                        && tpBe.getDisplayName().getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents tc2
+                        && "block.stalwart_dungeons.teleporter".equals(tc2.getKey()),
+                "TeleporterBlockBlockEntity displayName must use block translation key");
+
+        helper.succeed();
+    }
 }

@@ -1,4 +1,12 @@
 {
-  "mod.stalwartdungeonsbugfix.name": "Stalwart Dungeons Bug Fixes",
-  "enchantment.stalwart_dungeons.thunder_strike.desc": "When sneaking and striking a target with a hammer, grants a chance to summon a lightning bolt on the target."
+  "tooltip.stalwart_dungeons.when_hit": "When hit:",
+  "tooltip.stalwart_dungeons.when_used": "When used:",
+  "tooltip.stalwart_dungeons.full_set": "Full set:",
+  "tooltip.stalwart_dungeons.awful_dagger": "Clear all effects of enemy",
+  "tooltip.stalwart_dungeons.awful_gun": "Shoot Awful Ghast fire ball",
+  "tooltip.stalwart_dungeons.nether_hammer": "Burn and Smelt the Block",
+  "tooltip.stalwart_dungeons.shulker_cannon": "Need TNT",
+  "tooltip.stalwart_dungeons.chorundum_armor": "Immunize you to Levitation Effect",
+  "tooltip.stalwart_dungeons.tungsten_armor": "Immunize you to Burning and Wither Effect",
+  "tooltip.stalwart_dungeons.warted_tungsten_armor": "Immunize you to Spore and Wither Effect"
 }
