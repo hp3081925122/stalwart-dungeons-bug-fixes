@@ -128,7 +128,7 @@ public final class SdBugfixConfig {
 
         common.comment("实体 AI、崩溃与过程脚本修复 / Entities, AI and Procedures").push("entities");
         FIX_ENTITY_CRASHES_AND_AI = common
-                .comment("修复可怕恶魂目标空指针崩溃、飞行怪盲选实心块寻路卡顿与重复漫步目标、无甲庇护者 AI 优先级倒置、下界守卫驯服攻击主人与繁殖空指针、庇护者死亡误删掉落与重复刷二阶段、漂浮投射物命中失效及 4 种投掷物可拾取刷物品 / Fix Awful Ghast target NPE, airborne stroll lag, SheltererWithoutArmor inverted AI priorities, Nether Keeper taming/breeding bugs, Shelterer death drops, Levitation projectile hit, and projectile pickup dupes.")
+                .comment("修复可怕恶魂目标空指针崩溃、飞行怪盲选实心块寻路卡顿与重复漫步目标、无甲庇护者 AI 优先级倒置、下界守卫驯服攻击主人与繁殖空指针、庇护者死亡误删掉落与重复刷二阶段、潜影加农炮与孢子投射物爆炸免疫漏判 PLAYER_EXPLOSION、漂浮投射物命中失效及 4 种投掷物可拾取刷物品 / Fix Awful Ghast target NPE, airborne stroll lag, SheltererWithoutArmor inverted AI priorities, Nether Keeper taming/breeding bugs, Shelterer death drops, Shulker Cannon & Spore Projectile explosion immunity missing PLAYER_EXPLOSION, Levitation projectile hit, and projectile pickup dupes.")
                 .define("fixEntityCrashesAndAi", true);
         FIX_ENTITY_MOB_CATEGORIES = common
                 .comment("修正 propulk 实体分类为 MONSTER（防止抢占友好生物刷怪上限）与 spore_projectile 分类为 MISC（防止占用敌对刷怪上限） / Fix MobCategory of propulk (CREATURE -> MONSTER) and spore_projectile (MONSTER -> MISC).")

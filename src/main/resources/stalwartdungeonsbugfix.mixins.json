@@ -49,6 +49,7 @@
     "entity.PropulkEntityMixin",
     "entity.ReinforcedBlazeEntityMixin",
     "entity.ShulkerCannonEntityMixin",
+    "entity.ExplosionImmunityTagFixMixin",
     "entity.LevitationProjectileEntityMixin",
     "entity.PickupDupeProjectilesMixin",
     "entity.NetherKeeperTickProcedureMixin",

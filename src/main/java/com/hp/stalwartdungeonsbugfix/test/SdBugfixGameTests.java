@@ -21,6 +21,7 @@ import net.mcreator.stalwartdungeons.entity.SheltererEntity;
 import net.mcreator.stalwartdungeons.entity.SheltererWithoutArmorEntity;
 import net.mcreator.stalwartdungeons.entity.ShulkerCannonEntity;
 import net.mcreator.stalwartdungeons.entity.SporeBottleEntity;
+import net.mcreator.stalwartdungeons.entity.SporeProjectileEntity;
 import net.mcreator.stalwartdungeons.init.StalwartDungeonsModBlocks;
 import net.mcreator.stalwartdungeons.init.StalwartDungeonsModEnchantments;
 import net.mcreator.stalwartdungeons.init.StalwartDungeonsModEntities;
@@ -84,6 +85,7 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.AgeableMob;
@@ -96,6 +98,7 @@ import net.minecraft.world.entity.ai.goal.RandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.WrappedGoal;
 import net.minecraft.world.entity.animal.Pig;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.item.Item;
@@ -1017,6 +1020,55 @@ public final class SdBugfixGameTests {
         helper.assertTrue(java.nio.file.Files.exists(modFile.getFile().findResource(
                         "resourcepacks/sd_client_overrides/assets/stalwart_dungeons/models/item/tungsten_shield.json")),
                 "TOP override pack tungsten_shield.json must exist");
+
+        helper.succeed();
+    }
+
+    @GameTest(template = EMPTY_TEMPLATE, templateNamespace = Stalwartdungeonsbugfix.MOD_ID)
+    public static void testExplosionImmunityCoversPlayerExplosion(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos pos = helper.absolutePos(new BlockPos(4, 2, 4));
+
+        Creeper creeper = EntityType.CREEPER.create(level);
+        helper.assertTrue(creeper != null, "Failed to create test Creeper");
+        DamageSource playerExplosion = level.damageSources().explosion(creeper, creeper);
+        helper.assertTrue(playerExplosion.is(DamageTypes.PLAYER_EXPLOSION),
+                "Precondition: explosion(creeper, creeper) must produce PLAYER_EXPLOSION");
+        DamageSource blockExplosion = level.damageSources().explosion(null, null);
+
+        // 1. 潜影加农炮面对有源爆炸（PLAYER_EXPLOSION）与无源爆炸均免疫且不扣血，但 /kill（genericKill）仍可击杀
+        ShulkerCannonEntity cannon = StalwartDungeonsModEntities.SHULKER_CANNON.get().create(level);
+        helper.assertTrue(cannon != null, "Failed to create ShulkerCannonEntity");
+        cannon.moveTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, 0.0F, 0.0F);
+        level.addFreshEntity(cannon);
+        float cannonHp = cannon.getHealth();
+        helper.assertFalse(cannon.hurt(playerExplosion, 20.0F),
+                "ShulkerCannonEntity must be immune to PLAYER_EXPLOSION");
+        helper.assertTrue(cannon.getHealth() == cannonHp && !cannon.isRemoved(),
+                "ShulkerCannonEntity health must stay unchanged on PLAYER_EXPLOSION");
+        helper.assertFalse(cannon.hurt(blockExplosion, 20.0F),
+                "ShulkerCannonEntity must remain immune to EXPLOSION");
+        helper.assertTrue(cannon.getHealth() == cannonHp,
+                "ShulkerCannonEntity health must stay unchanged on EXPLOSION");
+        helper.assertTrue(cannon.hurt(level.damageSources().genericKill(), Float.MAX_VALUE) && cannon.isDeadOrDying(),
+                "ShulkerCannonEntity must still be killable by genericKill");
+
+        // 2. 孢子投射物面对有源爆炸（PLAYER_EXPLOSION）与无源爆炸均免疫且不扣血，但 /kill（genericKill）仍可击杀
+        SporeProjectileEntity spore = StalwartDungeonsModEntities.SPORE_PROJECTILE.get().create(level);
+        helper.assertTrue(spore != null, "Failed to create SporeProjectileEntity");
+        spore.moveTo(pos.getX() + 2.5, pos.getY(), pos.getZ() + 0.5, 0.0F, 0.0F);
+        level.addFreshEntity(spore);
+        float sporeHp = spore.getHealth();
+        helper.assertFalse(spore.hurt(playerExplosion, 20.0F),
+                "SporeProjectileEntity must be immune to PLAYER_EXPLOSION");
+        helper.assertTrue(spore.getHealth() == sporeHp && !spore.isRemoved(),
+                "SporeProjectileEntity health must stay unchanged on PLAYER_EXPLOSION");
+        helper.assertFalse(spore.hurt(blockExplosion, 20.0F),
+                "SporeProjectileEntity must remain immune to EXPLOSION");
+        helper.assertTrue(spore.getHealth() == sporeHp,
+                "SporeProjectileEntity health must stay unchanged on EXPLOSION");
+        helper.assertTrue(spore.hurt(level.damageSources().genericKill(), Float.MAX_VALUE) && spore.isDeadOrDying(),
+                "SporeProjectileEntity must still be killable by genericKill");
 
         helper.succeed();
     }
